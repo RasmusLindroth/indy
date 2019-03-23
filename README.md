@@ -13,9 +13,10 @@ function in [pkg/news/news.go](pkg/news/news.go) to match something else.
 2. Create a database and table named `indy`. Check [table.sql](./table.sql).
 If you want to use another name  you'll have to change the code in
 [pkg/database/database.go](pkg/database/database.go).
-3. Create a [config-file](./config-sample.yml).
-4. Install: `go install`
-5. Run it: `./indy -conf ./config.yml`
+3. You should propably remove/change my google tracking code in [index.gohtml](./webfiles/templates/index.gohtml).
+4. Create a [config-file](./config-sample.yml).
+5. Install: `go install`
+6. Run it: `./indy -conf ./config.yml`
 
 ## Requirements
 * Go (some later version supporting modules)
