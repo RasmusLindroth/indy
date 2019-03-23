@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+
+@font-face {
+  font-family: 'Arvo';
+  font-display: auto;
+  src: local('Arvo'), url(https://fonts.gstatic.com/s/arvo/v9/rC7kKhY-eUDY-ucISTIf5PesZW2xOQ-xsNqO47m55DA.woff2) format('woff2');
+}
+
+html,
+body {
+  font-family: "Roboto", sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+}
+
+.maxwidth {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.blue {
+  color: #006aa7;
+}
+
+
+header {
+  background-color: #006aa7;
+}
+
+header h1 {
+  font-size: 3.4em;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: #006aa7;
+}
+
+main {
+  padding: 1em 0.5em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.intro {
+  line-height: 1.5em;
+}
+
+.news-link {
+  text-decoration: none;
+  color: #000000;
+}
+
+.news-article {
+  margin-top: 1em;
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.3);
+}
+
+.news-publication {
+  margin: 0;
+  padding: 10px 10px;
+  background-color: #006aa7;
+  color: #ffffff;
+}
+
+.news-publication h5 {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+.news-content {
+  padding: 10px;
+  padding-top: 5px;
+}
+
+.news-date {
+  margin: 0;
+  padding-top: 5px;
+  font-size: 0.9em;
+}
+
+.tags {
+  padding-top: 5px;
+  display: flex;
+}
+
+.tag {
+  margin-left: 5px;
+  border-radius: 3px;
+  padding: 5px;
+  font-size: 0.8em;
+}
+
+.tag:first-of-type {
+  margin-left: 0;
+}
+
+.ros {
+  background-color: #610be8;
+  border: 1px solid #610be8;
+  color: #ffffff;
+}
+
+.eri {
+  background-color: #000000;
+  border: 1px solid #000000;
+  color: #ffffff;
+}
+
+footer {
+  background-color: #006aa7;
+  color: #FFFFFF;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1em 0.5em;
+  text-align: center;
+}
+
+.footer-content a {
+  text-decoration: none;
+  color: #FFFFFF;
+}

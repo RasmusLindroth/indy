@@ -1,0 +1,1 @@
+CREATE TABLE `indy`.`news` ( `id` INT NOT NULL AUTO_INCREMENT , `site` INT NOT NULL , `title` TEXT NOT NULL , `content` TEXT NOT NULL , `url` VARCHAR(255) NOT NULL , `matches` INT UNSIGNED NOT NULL , `date` DATETIME NOT NULL , PRIMARY KEY (`id`), UNIQUE (`url`)) ENGINE = InnoDB;

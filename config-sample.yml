@@ -1,0 +1,49 @@
+web:
+  port: 8080
+  files: "/home/rasmus/go/src/github.com/RasmusLindroth/indy/webfiles"
+
+db:
+  username: "indy"
+  password: "password"
+  port: 3306
+
+sites:
+  - id: 1
+    url: "http://f1blogg.teknikensvarld.se/category/indycar/feed/"
+    name: "Jannes blogg"
+    strict: false
+
+  - id: 2
+    url: "https://www.felixracing.se/feed/"
+    name: "Felix hemsida"
+    strict: false
+
+  - id: 3
+    url: "https://teknikensvarld.se/kategori/nyheter/motorsport/feed/"
+    name: "Teknikens Värld"
+    strict: true
+
+  - id: 4
+    url: "http://www.aftonbladet.se/sportbladet/rss.xml"
+    name: "Aftonbladet"
+    strict: true
+
+  - id: 5
+    url: "https://feeds.expressen.se/sport/motor/"
+    name: "Expressen"
+    strict: true
+
+  - id: 6
+    url: "https://www.svt.se/sport/motorsport/rss.xml"
+    name: "SVT"
+    strict: true
+
+  - id: 7
+    url: "https://bloggar.aftonbladet.se/f1bloggen/feed/"
+    name: "Aftonbladet F1-blogg"
+    strict: true
+
+  - id: 8
+    url: "http://www.bilsport.se/kategori/motorsport/feed/"
+    name: "Bilsport"
+    strict: true

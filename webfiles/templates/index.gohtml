@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="En samling av svenska nyheter om IndyCar, Marcus Ericsson och Felix Rosenqvist. Samlar nyheter från flera svenska medier för att du ska kunna hålla dig uppdaterad.">
+    <meta name="keywords" content="IndyCar, motorsport, Marcus Ericsson, Felix Rosenqvist, nyheter">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="theme-color" content="#006aa7">
+    <title>{{.Title}}</title>
+    <style type="text/css">{{.CSS}}</style>
+</head>
+
+<body>
+    <header>
+        <div class="maxwidth">
+            <div class="header">
+                <div>
+                    <h1>IndyCar</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="mcol news">
+            <h1>Om sidan</h1>
+            <div class="intro">
+                <p>En samlingssida med nyheter från åtta olika sidor om IndyCar, Marcus Ericsson och Felix Rosenqvist.
+                Artiklarna hämtas automatiskt och får en tagg beroende på vilken förare det handlar om.</p>
+            </div>
+            <h1>Nyheter</h1>
+            {{range .Articles}}
+            <a class="news-link" href="{{.URL}}" title="{{.Title}}" rel="noreferrer" target="_blank">
+            <article class="news-article">
+                <div class="news-publication">
+                    <h5>{{index $.Sites .Site}}</h5>
+                </div>
+                <div class="news-content">
+                    <h3>{{.Title}}</h3>
+                    <div class="tags">
+                        {{if .ContainsFelix}}
+                        <div class="tag ros">Felix</div>
+                        {{end}}
+                        {{if .ContainsMarcus}}
+                        <div class="tag eri">Marcus</div>
+                        {{end}}
+                    </div>
+                </div>
+            </article>
+            </a>
+            {{end}}
+        </div>
+    </main>
+    <footer>
+        <div class="footer-content">
+            <p>
+                <a href="https://rasmus.xyz" title="Rasmus Lindroth">Sidan drivs av <u>Rasmus Lindroth</u></a>
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>
