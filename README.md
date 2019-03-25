@@ -2,7 +2,7 @@
 
 This is the source code for [https://indycar.xyz](https://indycar.xyz).
 
-The site is a news aggregator I use for parse RSS-feeds and select news that 
+The site is a news aggregator that parses RSS-feeds and select news that 
 match articles mentioning IndyCar, Marcus Ericsson or Felix Rosenqvist.
 
 You can use this code to match some other words. Just change the `matchingArticle()` 

@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/RasmusLindroth/indy/pkg/news"
 
@@ -27,6 +28,8 @@ func New(user, pass, port string) (*Handler, error) {
 	if err != nil {
 		return handler, err
 	}
+
+	db.SetConnMaxLifetime(10 * time.Second)
 
 	handler.db = db
 	return handler, nil
