@@ -1,6 +1,7 @@
 html,
 body {
-  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande",
+    sans-serif;
   font-weight: 300;
   padding: 0;
   margin: 0;
@@ -24,7 +25,6 @@ h6 {
   color: #006aa7;
 }
 
-
 header {
   background-color: #006aa7;
 }
@@ -32,7 +32,7 @@ header {
 header h1 {
   font-size: 3.4em;
   text-align: center;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 h1,
@@ -114,9 +114,30 @@ main {
   color: #ffffff;
 }
 
+.pages {
+  margin-top: 1em;
+}
+
+.page-tag {
+  background-color: #006aa7;
+  color: #ffffff;
+  font-size: 1.3em;
+  padding: 5px 10px;
+  text-decoration: none;
+}
+
+.page-tag-active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.page-tag-desc {
+  padding-left: 0;
+}
+
 footer {
   background-color: #006aa7;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .footer-content {
@@ -128,5 +149,5 @@ footer {
 
 .footer-content a {
   text-decoration: none;
-  color: #FFFFFF;
+  color: #ffffff;
 }

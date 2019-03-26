@@ -58,6 +58,16 @@
             </article>
             </a>
             {{end}}
+            <div class="pages">
+                 <span class="tag page-tag page-tag-desc page-tag-active ">Sidor: </span>
+                {{range $i, $j := (pagelist .PageTotal) }}
+                    {{ if eq $j $.PageNow }}
+                        <span class="tag page-tag page-tag-active">{{$j}}</span>
+                    {{ else }}
+                        <a class="tag page-tag" title="Sida {{ $j }}" href="/news/page/{{ $j }}">{{ $j }}</a>
+                    {{end}}
+                {{end}}
+            </div>
         </div>
     </main>
     <footer>
