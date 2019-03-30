@@ -83,6 +83,7 @@ func (handler *Handler) StartServer(port string) {
 	r.HandleFunc("/", handler.HomeHandler)
 	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeHandler)
 	r.HandleFunc("/sitemap.xml", handler.SiteMap)
+	r.HandleFunc("/robots.txt", handler.Robots)
 	gzip := handlers.CompressHandler(r)
 
 	http.ListenAndServe(":"+port, handlers.RecoveryHandler()(gzip))
@@ -200,4 +201,11 @@ func (handler *Handler) SiteMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s%s", xml.Header, data)
+}
+
+//Robots handles robots.txt requests
+func (handler *Handler) Robots(w http.ResponseWriter, r *http.Request) {
+	sitemap := "https://indycar.xyz/sitemap.xml"
+
+	fmt.Fprintf(w, "User-agent: *\nAllow: /\n\nSitemap: %s", sitemap)
 }
