@@ -1,6 +1,8 @@
 package web
 
 import (
+	"encoding/xml"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -80,6 +82,7 @@ func (handler *Handler) StartServer(port string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler.HomeHandler)
 	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeHandler)
+	r.HandleFunc("/sitemap.xml", handler.SiteMap)
 	gzip := handlers.CompressHandler(r)
 
 	http.ListenAndServe(":"+port, handlers.RecoveryHandler()(gzip))
@@ -93,6 +96,7 @@ type HomeData struct {
 	CSS       template.CSS
 	PageNow   int
 	PageTotal int
+	StartPage bool
 }
 
 func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, statusCode int) {
@@ -146,6 +150,54 @@ func (handler *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	data.PageNow = page
 	data.PageTotal = pages
+	data.StartPage = r.URL.Path == "/"
 
 	handler.Templates.ExecuteTemplate(w, "index.gohtml", data)
+}
+
+//SiteMapUrlSet holds an URL set
+type SiteMapUrlSet struct {
+	XMLName xml.Name     `xml:"urlset"`
+	XMLNS   string       `xml:"xmlns,attr"`
+	URLs    []SiteMapURL `xml:"url"`
+}
+
+//SiteMapURL holds an URL
+type SiteMapURL struct {
+	Loc string `xml:"loc"`
+}
+
+//SiteMap handles sitemap requests
+func (handler *Handler) SiteMap(w http.ResponseWriter, r *http.Request) {
+	count, err := handler.DB.NumArticles()
+
+	if err != nil {
+		handler.errorHandler(w, r, http.StatusInternalServerError)
+		log.Printf("Error getting article count: %v\n", err)
+		return
+	}
+
+	pages := int(math.Ceil(float64(count) / float64(articlesPerPage)))
+
+	var urls []SiteMapURL
+	for i := 1; i <= pages; i++ {
+		if i == 1 {
+			urls = append(urls, SiteMapURL{Loc: "https://indycar.xyz/"})
+		} else {
+			urls = append(urls, SiteMapURL{Loc: fmt.Sprintf("https://indycar.xyz/news/page/%d", i)})
+		}
+	}
+	smap := SiteMapUrlSet{
+		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  urls,
+	}
+
+	data, err := xml.MarshalIndent(smap, "", "    ")
+	if err != nil {
+		handler.errorHandler(w, r, http.StatusInternalServerError)
+		log.Printf("Error generating sitemap: %v\n", err)
+		return
+	}
+
+	fmt.Fprintf(w, "%s%s", xml.Header, data)
 }

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="sv">
-
 <head>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-66012095-2"></script>
@@ -16,10 +15,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="theme-color" content="#006aa7">
+    {{if and (not .StartPage) (eq 1 .PageNow)}}
+    <link rel="canonical" href="https://indycar.xyz/">
+    {{end}}
     <title>{{.Title}}</title>
     <style type="text/css">{{.CSS}}</style>
 </head>
-
 <body>
     <header>
         <div class="maxwidth">
@@ -78,5 +79,4 @@
         </div>
     </footer>
 </body>
-
 </html>
