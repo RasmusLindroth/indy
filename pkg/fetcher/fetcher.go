@@ -1,8 +1,8 @@
 package fetcher
 
 import (
+	"fmt"
 	"log"
-	"sync"
 
 	"github.com/RasmusLindroth/indy/pkg/database"
 	"github.com/RasmusLindroth/indy/pkg/news"
@@ -11,36 +11,6 @@ import (
 )
 
 var parser = gofeed.NewParser()
-var cache = &cacheHanddler{Mutex: &sync.Mutex{}}
-
-type cacheHanddler struct {
-	Mutex *sync.Mutex
-	URLs  []string
-}
-
-func (c *cacheHanddler) exists(article *news.Article) bool {
-	c.Mutex.Lock()
-	defer c.Mutex.Unlock()
-
-	for _, url := range c.URLs {
-		if article.URL == url {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *cacheHanddler) add(article *news.Article) {
-	c.Mutex.Lock()
-	defer c.Mutex.Unlock()
-
-	if len(c.URLs) > 500 {
-		c.URLs = append(c.URLs[:0], c.URLs[1:]...)
-	}
-
-	c.URLs = append(c.URLs, article.URL)
-}
 
 //FetchSites gets all feeds and inserts them to the database
 func FetchSites(sites []*news.Site, db *database.Handler) {
@@ -63,7 +33,17 @@ func fetchSite(site *news.Site, db *database.Handler) {
 			continue
 		}
 
-		if cache.exists(article) {
+		existingArticle, err := db.GetItem(article)
+		if err != nil {
+			log.Printf("Couldn't get article: %v\n", err)
+			continue
+		}
+
+		if existingArticle != nil {
+			err = updateItem(existingArticle, article, db)
+			if err != nil {
+				log.Printf("Update err: %v\n", err)
+			}
 			continue
 		}
 
@@ -74,17 +54,30 @@ func fetchSite(site *news.Site, db *database.Handler) {
 	}
 }
 
+func compareArticles(old, new *news.Article) bool {
+	return old.Content != new.Content || old.Date != new.Date || old.Matches != new.Matches ||
+		old.Title != new.Title
+}
+
+func updateItem(old, new *news.Article, db *database.Handler) error {
+	diff := compareArticles(old, new)
+
+	if !diff {
+		return nil
+	}
+	fmt.Println(new.Title)
+
+	return db.UpdateNews(new, old.ID)
+}
+
 func insertItem(article *news.Article, site *news.Site, db *database.Handler) error {
 	err := db.AddNews(article)
 
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if ok && me.Number == 1062 {
-			cache.add(article)
 			return nil
 		}
-	} else {
-		cache.add(article)
 	}
 
 	return err

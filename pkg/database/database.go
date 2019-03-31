@@ -70,6 +70,36 @@ func (handler *Handler) AddNews(article *news.Article) error {
 	return err
 }
 
+//UpdateNews updates one news article
+func (handler *Handler) UpdateNews(article *news.Article, id uint) error {
+	date := article.Date.UTC().Format("2006-01-02 15:04:05")
+
+	_, err := handler.db.Exec("UPDATE news SET `title` = ?, `content` = ?, `matches` = ?, `date` = ? WHERE id=?", article.Title, article.Content, article.Matches, date, id)
+
+	return err
+}
+
+func (handler *Handler) GetItem(article *news.Article) (*news.Article, error) {
+
+	query := fmt.Sprintf("SELECT `id`, `site`, `title`, `content`, `url`, `matches`, `date` FROM news WHERE `url` = '%s'",
+		article.URL)
+
+	var dbArticle *news.Article
+	err := handler.makeQuery(query, func(rows *sql.Rows) error {
+		tmp := &news.Article{}
+		err := rows.Scan(&tmp.ID, &tmp.Site, &tmp.Title, &tmp.Content, &tmp.URL, &tmp.Matches, &tmp.Date)
+		if err != nil {
+
+			return err
+		}
+
+		dbArticle = tmp
+		return nil
+	})
+
+	return dbArticle, err
+}
+
 type getRow func(row *sql.Rows) error
 
 func (handler *Handler) makeQuery(query string, rowfunc getRow) error {
