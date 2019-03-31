@@ -137,6 +137,9 @@ func (handler *Handler) StartServer(port string) {
 	r.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, handler.filesPath+"/static/sw.js")
 	})
+	r.HandleFunc("/favicon.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, handler.filesPath+"/static/images/favicon.png")
+	})
 	r.HandleFunc("/error/404", func(w http.ResponseWriter, r *http.Request) {
 		handler.errorHandler(w, r, http.StatusNotFound)
 	})
