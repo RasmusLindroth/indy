@@ -57,7 +57,10 @@ func New(db *database.Handler, sites []*news.Site, filesPath string) *Handler {
 		},
 	}
 
-	templates := template.Must(template.New("").Funcs(funcs).ParseFiles(filesPath + "/templates/index.gohtml"))
+	templates := make(map[string]*template.Template)
+
+	templates["index"] = template.Must(template.New("").Funcs(funcs).ParseFiles(filesPath+"/templates/base.gohtml", filesPath+"/templates/index.gohtml"))
+	templates["error"] = template.Must(template.New("").ParseFiles(filesPath+"/templates/base.gohtml", filesPath+"/templates/error.gohtml"))
 
 	return &Handler{
 		DB:        db,
@@ -71,7 +74,7 @@ func New(db *database.Handler, sites []*news.Site, filesPath string) *Handler {
 //Handler holds something
 type Handler struct {
 	DB        *database.Handler
-	Templates *template.Template
+	Templates map[string]*template.Template
 	Sites     map[uint]string
 	filesPath string
 	css       template.CSS
@@ -84,9 +87,58 @@ func (handler *Handler) StartServer(port string) {
 	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeHandler)
 	r.HandleFunc("/sitemap.xml", handler.SiteMap)
 	r.HandleFunc("/robots.txt", handler.Robots)
+	r.NotFoundHandler = http.HandlerFunc(handler.NotFound)
 	gzip := handlers.CompressHandler(r)
 
 	http.ListenAndServe(":"+port, handlers.RecoveryHandler()(gzip))
+}
+
+//ErrorData holds data to serve
+type ErrorData struct {
+	Title      string
+	ErrorTitle string
+	ErrorMsg   string
+	CSS        template.CSS
+	Canonical  bool
+}
+
+//NotFound runs the errorHandler
+func (handler *Handler) NotFound(w http.ResponseWriter, r *http.Request) {
+	handler.errorHandler(w, r, http.StatusNotFound)
+}
+
+func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, statusCode int) {
+	/*
+		Apparently we need to set the content type.
+		https://github.com/gorilla/handlers/issues/83#issuecomment-244800033
+	*/
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(statusCode)
+
+	var title string
+	var msg string
+
+	switch statusCode {
+	case 404:
+		title = "Sidan finns inte (404)"
+		msg = "Tyvärr har du råkat hamna på en sida som inte finns."
+	case 500:
+		title = "Ett fel i servern har inträffat (500)"
+		msg = "Tyvärr har något gått snett i servern. Var vänlig och försök igen."
+	case 401:
+		title = "Du har inte rätt behörighet (401)"
+		msg = "Du måste logga in för att besöka den här sidan."
+	}
+
+	data := ErrorData{
+		Title:      fmt.Sprintf("IndyCar - %d", statusCode),
+		ErrorTitle: title,
+		ErrorMsg:   msg,
+		CSS:        handler.css,
+		Canonical:  false,
+	}
+
+	handler.Templates["error"].ExecuteTemplate(w, "base", data)
 }
 
 //HomeData holds data to serve
@@ -97,11 +149,7 @@ type HomeData struct {
 	CSS       template.CSS
 	PageNow   int
 	PageTotal int
-	StartPage bool
-}
-
-func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, statusCode int) {
-	http.Error(w, http.StatusText(statusCode), statusCode)
+	Canonical bool
 }
 
 //HomeHandler handles home requests
@@ -151,13 +199,13 @@ func (handler *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	data.PageNow = page
 	data.PageTotal = pages
-	data.StartPage = r.URL.Path == "/"
+	data.Canonical = r.URL.Path != "/" && page == 1
 
-	handler.Templates.ExecuteTemplate(w, "index.gohtml", data)
+	handler.Templates["index"].ExecuteTemplate(w, "base", data)
 }
 
-//SiteMapUrlSet holds an URL set
-type SiteMapUrlSet struct {
+//SiteMapURLSet holds an URL set
+type SiteMapURLSet struct {
 	XMLName xml.Name     `xml:"urlset"`
 	XMLNS   string       `xml:"xmlns,attr"`
 	URLs    []SiteMapURL `xml:"url"`
@@ -188,7 +236,7 @@ func (handler *Handler) SiteMap(w http.ResponseWriter, r *http.Request) {
 			urls = append(urls, SiteMapURL{Loc: fmt.Sprintf("https://indycar.xyz/news/page/%d", i)})
 		}
 	}
-	smap := SiteMapUrlSet{
+	smap := SiteMapURLSet{
 		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
 		URLs:  urls,
 	}

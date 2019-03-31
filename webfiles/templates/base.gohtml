@@ -1,0 +1,45 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-66012095-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-66012095-2');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="description" content="En samling av svenska nyheter om IndyCar, Marcus Ericsson och Felix Rosenqvist. Samlar nyheter från flera svenska medier för att du ska kunna hålla dig uppdaterad.">
+    <meta name="keywords" content="IndyCar, motorsport, Marcus Ericsson, Felix Rosenqvist, nyheter">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="theme-color" content="#006aa7">
+    {{if .Canonical}}
+    <link rel="canonical" href="https://indycar.xyz/">
+    {{end}}
+    <title>{{.Title}}</title>
+    <style type="text/css">{{.CSS}}</style>
+</head>
+<body>
+    <header>
+        <div class="maxwidth">
+            <div class="header">
+                <div>
+                    <h1>IndyCar</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main>
+        {{template "content" .}}
+    </main>
+    <footer>
+        <div class="footer-content">
+            <p>
+                <a href="https://rasmus.xyz" title="Rasmus Lindroth">Sidan drivs av <u>Rasmus Lindroth</u></a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>{{end}}

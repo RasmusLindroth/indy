@@ -39,6 +39,15 @@ func NewArticle(item *gofeed.Item, site *Site) *Article {
 	return a
 }
 
+//FormattedDate returns date formatted
+func (article *Article) FormattedDate() string {
+	loc, err := time.LoadLocation("Europe/Stockholm")
+	if err != nil {
+		loc = time.Local
+	}
+	return article.Date.In(loc).Format("2006-01-02 15:04")
+}
+
 //ArticleMatch is used to hold match result
 type ArticleMatch uint8
 
