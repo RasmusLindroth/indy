@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"html/template"
@@ -17,9 +18,58 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
+	"github.com/tdewolff/minify/v2/js"
 )
 
 const articlesPerPage = 30
+
+func minifyCSS(path string) ([]byte, error) {
+	var minified []byte
+
+	f, err := os.Open(path)
+	if err != nil {
+		return minified, err
+	}
+
+	unminified, err := ioutil.ReadAll(f)
+	if err != nil {
+		return minified, err
+	}
+
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+
+	minified, err = m.Bytes("text/css", unminified)
+	if err != nil {
+		return minified, err
+	}
+
+	return minified, err
+}
+
+func minifyJS(path string) ([]byte, error) {
+	var minified []byte
+
+	f, err := os.Open(path)
+	if err != nil {
+		return minified, err
+	}
+
+	unminified, err := ioutil.ReadAll(f)
+	if err != nil {
+		return minified, err
+	}
+
+	m := minify.New()
+	m.AddFunc("application/javascript", js.Minify)
+
+	minified, err = m.Bytes("application/javascript", unminified)
+	if err != nil {
+		return minified, err
+	}
+
+	return minified, err
+}
 
 //New returns a new web handler
 func New(db *database.Handler, sites []*news.Site, filesPath string) *Handler {
@@ -29,20 +79,14 @@ func New(db *database.Handler, sites []*news.Site, filesPath string) *Handler {
 		smap[site.ID] = site.Name
 	}
 
-	f, err := os.Open(filesPath + "/static/style.css")
+	minifiedCSS, err := minifyCSS(filesPath + "/include/style.css")
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	unminified, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
+	minifiedJS, err := minifyJS(filesPath + "/include/main.js")
 
-	m := minify.New()
-	m.AddFunc("text/css", css.Minify)
-
-	minified, err := m.Bytes("text/css", unminified)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +111,8 @@ func New(db *database.Handler, sites []*news.Site, filesPath string) *Handler {
 		Templates: templates,
 		Sites:     smap,
 		filesPath: filesPath,
-		css:       template.CSS(string(minified)),
+		css:       template.CSS(string(minifiedCSS)),
+		js:        template.JS(string(minifiedJS)),
 	}
 }
 
@@ -78,6 +123,7 @@ type Handler struct {
 	Sites     map[uint]string
 	filesPath string
 	css       template.CSS
+	js        template.JS
 }
 
 //StartServer starts the server
@@ -86,7 +132,19 @@ func (handler *Handler) StartServer(port string) {
 	r.HandleFunc("/", handler.HomeHandler)
 	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeHandler)
 	r.HandleFunc("/sitemap.xml", handler.SiteMap)
+	r.HandleFunc("/manifest.json", handler.Manifest)
 	r.HandleFunc("/robots.txt", handler.Robots)
+	r.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, handler.filesPath+"/static/sw.js")
+	})
+	r.HandleFunc("/error/404", func(w http.ResponseWriter, r *http.Request) {
+		handler.errorHandler(w, r, http.StatusNotFound)
+	})
+	r.HandleFunc("/error/offline", func(w http.ResponseWriter, r *http.Request) {
+		handler.errorHandler(w, r, http.StatusOK)
+	})
+	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", http.FileServer(http.Dir(handler.filesPath+"/static/images"))))
+
 	r.NotFoundHandler = http.HandlerFunc(handler.NotFound)
 	gzip := handlers.CompressHandler(r)
 
@@ -99,6 +157,7 @@ type ErrorData struct {
 	ErrorTitle string
 	ErrorMsg   string
 	CSS        template.CSS
+	JS         template.JS
 	Canonical  bool
 }
 
@@ -119,6 +178,10 @@ func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, sta
 	var msg string
 
 	switch statusCode {
+	//Used for offline requests
+	case 200:
+		title = "Du är offline"
+		msg = "Tyvärr har du ingen internetuppkoppling nu. Försök igen senare."
 	case 404:
 		title = "Sidan finns inte (404)"
 		msg = "Tyvärr har du råkat hamna på en sida som inte finns."
@@ -135,6 +198,7 @@ func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, sta
 		ErrorTitle: title,
 		ErrorMsg:   msg,
 		CSS:        handler.css,
+		JS:         handler.js,
 		Canonical:  false,
 	}
 
@@ -147,6 +211,7 @@ type HomeData struct {
 	Articles  []*news.Article
 	Sites     map[uint]string
 	CSS       template.CSS
+	JS        template.JS
 	PageNow   int
 	PageTotal int
 	Canonical bool
@@ -173,7 +238,7 @@ func (handler *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		page = num
 	}
 
-	data := HomeData{Title: "IndyCar - Sverige", Sites: handler.Sites, CSS: handler.css}
+	data := HomeData{Title: "IndyCar - Sverige", Sites: handler.Sites, CSS: handler.css, JS: handler.js}
 	articles, err := handler.DB.GetNews(page, articlesPerPage)
 	if err != nil {
 		handler.errorHandler(w, r, http.StatusInternalServerError)
@@ -251,9 +316,63 @@ func (handler *Handler) SiteMap(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s%s", xml.Header, data)
 }
 
+//Manifest holds the data for manifest.json
+type Manifest struct {
+	ShortName       string         `json:"short_name"`
+	Name            string         `json:"name"`
+	Icons           []ManifestIcon `json:"icons"`
+	StartURL        string         `json:"start_url"`
+	BackgroundColor string         `json:"background_color"`
+	Display         string         `json:"display"`
+	Scope           string         `json:"scope"`
+	ThemeColor      string         `json:"theme_color"`
+}
+
+//ManifestIcon holds one icon in manifest
+type ManifestIcon struct {
+	Src   string `json:"src"`
+	Type  string `json:"type"`
+	Sizes string `json:"sizes"`
+}
+
+//Manifest handles manifest.json requests
+func (handler *Handler) Manifest(w http.ResponseWriter, r *http.Request) {
+	manifest := Manifest{
+		ShortName: "IndySwe",
+		Name:      "Indycar Sverige",
+		Icons: []ManifestIcon{
+			ManifestIcon{
+				Src:   "/images/indy192.png",
+				Type:  "image/png",
+				Sizes: "192x192",
+			},
+			ManifestIcon{
+				Src:   "/images/indy512.png",
+				Type:  "image/png",
+				Sizes: "512x512",
+			},
+		},
+		StartURL:        "/",
+		BackgroundColor: "#006aa7",
+		Display:         "standalone",
+		Scope:           "/",
+		ThemeColor:      "#006aa7",
+	}
+
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		handler.errorHandler(w, r, http.StatusInternalServerError)
+		log.Printf("Error generating manifest: %v\n", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
 //Robots handles robots.txt requests
 func (handler *Handler) Robots(w http.ResponseWriter, r *http.Request) {
 	sitemap := "https://indycar.xyz/sitemap.xml"
 
-	fmt.Fprintf(w, "User-agent: *\nAllow: /\n\nSitemap: %s", sitemap)
+	fmt.Fprintf(w, "User-agent: *\nAllow: /\nDisallow: /error/offline\n\nSitemap: %s", sitemap)
 }

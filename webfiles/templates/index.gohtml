@@ -31,7 +31,9 @@
         {{range $i, $j := (pagelist .PageTotal) }}
             {{ if eq $j $.PageNow }}
                 <span class="tag page-tag page-tag-active">{{$j}}</span>
-            {{ else }}
+            {{ else if eq $j 1 }}
+                <a class="tag page-tag" title="Sida {{ $j }}" href="/">{{ $j }}</a>
+            {{else}}
                 <a class="tag page-tag" title="Sida {{ $j }}" href="/news/page/{{ $j }}">{{ $j }}</a>
             {{end}}
         {{end}}

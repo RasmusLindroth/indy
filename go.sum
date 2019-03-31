@@ -25,8 +25,12 @@ github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnIn
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/tdewolff/minify v2.3.6+incompatible h1:2hw5/9ZvxhWLvBUnHE06gElGYz+Jv9R4Eys0XUzItYo=
+github.com/tdewolff/minify v2.3.6+incompatible/go.mod h1:9Ov578KJUmAWpS6NeZwRZyT56Uf6o3Mcz9CEsg8USYs=
 github.com/tdewolff/minify/v2 v2.3.8 h1:Eyv23Tu+Rb5Q2vyxmvzUgtHetgneqAsaGv3950s1EeA=
 github.com/tdewolff/minify/v2 v2.3.8/go.mod h1:DD1stRlSx6JsHfl1+E/HVMQeXiec9rD1UQ0epklIZLc=
+github.com/tdewolff/parse v2.3.4+incompatible h1:x05/cnGwIMf4ceLuDMBOdQ1qGniMoxpP46ghf0Qzh38=
+github.com/tdewolff/parse v2.3.4+incompatible/go.mod h1:8oBwCsVmUkgHO8M5iCzSIDtpzXOT0WXX9cWhz+bIzJQ=
 github.com/tdewolff/parse/v2 v2.3.5 h1:/uS8JfhwVJsNkEh769GM5ENv6L9LOh2Z9uW3tCdlhs0=
 github.com/tdewolff/parse/v2 v2.3.5/go.mod h1:HansaqmN4I/U7L6/tUp0NcwT2tFO0F4EAWYGSDzkYNk=
 github.com/tdewolff/test v1.0.0 h1:jOwzqCXr5ePXEPGJaq2ivoR6HOCi+D5TPfpoyg8yvmU=
