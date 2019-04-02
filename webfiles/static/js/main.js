@@ -49,9 +49,6 @@ class App {
             });
 
             this.elements['manualFetchPrevBtn'].addEventListener('click', () => {
-                if (this.pages.indexOf(1) !== 1) {
-                    this.elements['manualFetchPrev'].style.display = 'none';
-                }
                 this.getNews(false);
             });
 
