@@ -129,8 +129,10 @@ type Handler struct {
 //StartServer starts the server
 func (handler *Handler) StartServer(port string) {
 	r := mux.NewRouter()
-	r.HandleFunc("/", handler.HomeHandler)
-	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeHandler)
+	r.HandleFunc("/", handler.HomeWebHandler)
+	r.HandleFunc("/news/page/{page:[0-9]+}", handler.HomeWebHandler)
+	r.HandleFunc("/api/news/page/{page:[0-9]+}", handler.HomeAPIHandler)
+
 	r.HandleFunc("/sitemap.xml", handler.SiteMap)
 	r.HandleFunc("/manifest.json", handler.Manifest)
 	r.HandleFunc("/robots.txt", handler.Robots)
@@ -147,6 +149,7 @@ func (handler *Handler) StartServer(port string) {
 		handler.errorHandler(w, r, http.StatusOK)
 	})
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", http.FileServer(http.Dir(handler.filesPath+"/static/images"))))
+	r.PathPrefix("/js/").Handler(http.StripPrefix("/js/", http.FileServer(http.Dir(handler.filesPath+"/static/js"))))
 
 	r.NotFoundHandler = http.HandlerFunc(handler.NotFound)
 	gzip := handlers.CompressHandler(r)
@@ -210,6 +213,59 @@ func (handler *Handler) errorHandler(w http.ResponseWriter, r *http.Request, sta
 
 //HomeData holds data to serve
 type HomeData struct {
+	Articles  []*news.Article `json:"articles"`
+	Sites     map[uint]string `json:"sites"`
+	PageNow   int             `json:"page_now"`
+	PageTotal int             `json:"page_total"`
+}
+
+//HomeHandler serves both HomeWeb/APIHandler
+func (handler *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) (*HomeData, int) {
+	data := &HomeData{Sites: handler.Sites}
+
+	var page = 1
+	vars := mux.Vars(r)
+
+	if val, ok := vars["page"]; ok {
+		num, err := strconv.Atoi(val)
+
+		if err != nil {
+			return data, http.StatusNotFound
+		}
+
+		if num < 1 {
+			return data, http.StatusNotFound
+		}
+
+		page = num
+	}
+
+	articles, err := handler.DB.GetNews(page, articlesPerPage)
+	if err != nil {
+		return data, http.StatusInternalServerError
+	}
+
+	if len(articles) == 0 {
+		return data, http.StatusNotFound
+	}
+	data.Articles = articles
+
+	count, err := handler.DB.NumArticles()
+
+	if err != nil {
+		return data, http.StatusInternalServerError
+	}
+
+	pages := int(math.Ceil(float64(count) / float64(articlesPerPage)))
+
+	data.PageNow = page
+	data.PageTotal = pages
+
+	return data, http.StatusOK
+}
+
+//HomeWebData holds data to serve
+type HomeWebData struct {
 	Title     string
 	Articles  []*news.Article
 	Sites     map[uint]string
@@ -220,56 +276,72 @@ type HomeData struct {
 	Canonical bool
 }
 
-//HomeHandler handles home requests
-func (handler *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	var page = 1
-	vars := mux.Vars(r)
+//HomeWebHandler handles home requests
+func (handler *Handler) HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 
-	if val, ok := vars["page"]; ok {
-		num, err := strconv.Atoi(val)
+	homeData, status := handler.HomeHandler(w, r)
 
-		if err != nil {
-			handler.errorHandler(w, r, http.StatusNotFound)
-			return
-		}
-
-		if num < 1 {
-			handler.errorHandler(w, r, http.StatusNotFound)
-			return
-		}
-
-		page = num
-	}
-
-	data := HomeData{Title: "IndyCar - Sverige", Sites: handler.Sites, CSS: handler.css, JS: handler.js}
-	articles, err := handler.DB.GetNews(page, articlesPerPage)
-	if err != nil {
-		handler.errorHandler(w, r, http.StatusInternalServerError)
-		log.Printf("Error serving articles: %v\n", err)
+	if status != http.StatusOK {
+		handler.errorHandler(w, r, status)
 		return
 	}
 
-	if len(articles) == 0 {
-		handler.errorHandler(w, r, http.StatusNotFound)
-		return
-	}
-	data.Articles = articles
-
-	count, err := handler.DB.NumArticles()
-
-	if err != nil {
-		handler.errorHandler(w, r, http.StatusInternalServerError)
-		log.Printf("Error getting article count: %v\n", err)
-		return
+	data := HomeWebData{
+		Title:     "IndyCar - Sverige",
+		Sites:     handler.Sites,
+		CSS:       handler.css,
+		JS:        handler.js,
+		Articles:  homeData.Articles,
+		PageNow:   homeData.PageNow,
+		PageTotal: homeData.PageTotal,
 	}
 
-	pages := int(math.Ceil(float64(count) / float64(articlesPerPage)))
-
-	data.PageNow = page
-	data.PageTotal = pages
-	data.Canonical = r.URL.Path != "/" && page == 1
+	data.Canonical = r.URL.Path != "/" && homeData.PageNow == 1
 
 	handler.Templates["index"].ExecuteTemplate(w, "base", data)
+}
+
+//APIError returns an API error
+type APIError struct {
+	Msg    string `json:"msg"`
+	Status int    `json:"status_code"`
+}
+
+func (handler *Handler) errorAPIHandler(w http.ResponseWriter, r *http.Request, msg string, statusCode int) {
+	/*
+		Apparently we need to set the content type.
+		https://github.com/gorilla/handlers/issues/83#issuecomment-244800033
+	*/
+
+	data, _ := json.Marshal(APIError{
+		Msg:    msg,
+		Status: statusCode,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(data)
+
+}
+
+//HomeAPIHandler handles home requests to the api
+func (handler *Handler) HomeAPIHandler(w http.ResponseWriter, r *http.Request) {
+	homeData, status := handler.HomeHandler(w, r)
+
+	if status != http.StatusOK {
+		handler.errorAPIHandler(w, r, "API error", status)
+		return
+	}
+
+	data, err := json.Marshal(homeData)
+	if err != nil {
+		handler.errorAPIHandler(w, r, "Couldn't generate JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+
 }
 
 //SiteMapURLSet holds an URL set

@@ -1,7 +1,6 @@
 package fetcher
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/RasmusLindroth/indy/pkg/database"
@@ -65,7 +64,6 @@ func updateItem(old, new *news.Article, db *database.Handler) error {
 	if !diff {
 		return nil
 	}
-	fmt.Println(new.Title)
 
 	return db.UpdateNews(new, old.ID)
 }
