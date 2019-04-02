@@ -6,7 +6,8 @@ The site is a news aggregator that parses RSS-feeds and select news that
 match articles mentioning IndyCar, Marcus Ericsson or Felix Rosenqvist.
 
 You can use this code to match some other words. Just change the `matchingArticle()` 
-function in [pkg/news/news.go](pkg/news/news.go) to match something else.
+function in [pkg/news/news.go](pkg/news/news.go) to match something else. But 
+you will have to change the HTML and JavaScript yourself.
 
 ## How to
 1. `go get -u github.com/RasmusLindroth/indy`

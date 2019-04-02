@@ -154,7 +154,11 @@ class App {
             this.reachedEnd();
         }
 
-        this.addPage(data, after);
+        if (after === false && this.pageNow === 1) {
+            this.loadedFirst();
+        }
+
+            this.addPage(data, after);
     }
 
     addPage(data, after) {
